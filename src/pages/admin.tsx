@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { TypingText } from '@/data/typing-texts';
 
 export default function AdminPage() {
   const [form, setForm] = useState({ title: '', text: '', category: '', language: '', difficulty: 'easy' });
