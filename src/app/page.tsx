@@ -14,6 +14,7 @@ export default function HomePage() {
   const [currentView, setCurrentView] = useState<'selector' | 'typing' | 'leaderboard'>('selector');
   const [selectedText, setSelectedText] = useState<TypingText | null>(null);
   const [currentStats, setCurrentStats] = useState<TypingStats | null>(null);
+  const [resetSelector, setResetSelector] = useState(0);
 
   const handleTextSelect = (text: TypingText) => {
     setSelectedText(text);
@@ -28,6 +29,14 @@ export default function HomePage() {
     setCurrentView('selector');
     setSelectedText(null);
     setCurrentStats(null);
+    setResetSelector((prev) => prev + 1);
+  };
+
+  const handleGoHome = () => {
+    setCurrentView('selector');
+    setSelectedText(null);
+    setCurrentStats(null);
+    setResetSelector((prev) => prev + 1);
   };
 
   const handleRandomText = () => {
@@ -50,7 +59,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <button
-                onClick={() => setCurrentView('selector')}
+                onClick={handleGoHome}
                 className="flex items-center focus:outline-none group"
                 aria-label="Về trang chủ"
               >
@@ -65,7 +74,10 @@ export default function HomePage() {
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setCurrentView(item.id as 'selector' | 'typing' | 'leaderboard')}
+                    onClick={() => {
+                      if (item.id === 'selector') handleGoHome();
+                      else setCurrentView(item.id as 'selector' | 'typing' | 'leaderboard');
+                    }}
                     disabled={item.disabled}
                     className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       currentView === item.id
@@ -97,6 +109,7 @@ export default function HomePage() {
               <TextSelector
                 onSelectText={handleTextSelect}
                 selectedText={selectedText}
+                resetTrigger={resetSelector}
               />
               
               {/* Ad Banner */}

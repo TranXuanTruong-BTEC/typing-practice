@@ -1,55 +1,93 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { TypingText, typingTexts } from '@/data/typing-texts';
+import React, { useState, useMemo, useEffect } from 'react';
+// import { TypingText, typingTexts } from '@/data/typing-texts';
 import { getDifficultyColor } from '@/lib/typing-utils';
 import { motion } from 'framer-motion';
 import { Search, BookOpen, Globe, Zap } from 'lucide-react';
 
+interface TypingText {
+  id: string;
+  title: string;
+  category: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  text: string;
+  language: string;
+}
+
 interface TextSelectorProps {
   onSelectText: (text: TypingText) => void;
   selectedText: TypingText | null;
+  resetTrigger?: number;
 }
 
-export default function TextSelector({ onSelectText, selectedText }: TextSelectorProps) {
+export default function TextSelector({ onSelectText, selectedText, resetTrigger }: TextSelectorProps) {
+  const [typingTexts, setTypingTexts] = useState<TypingText[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
   const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
 
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/texts')
+      .then(res => res.json())
+      .then(data => {
+        setTypingTexts(data);
+        setLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    setSearchTerm('');
+    setSelectedCategory('all');
+    setSelectedDifficulty('all');
+    setSelectedLanguage('all');
+  }, [resetTrigger]);
+
   const categories = useMemo(() => {
     const cats = [...new Set(typingTexts.map(text => text.category))];
     return cats;
-  }, []);
+  }, [typingTexts]);
+
+  const languageOptions = useMemo(() => {
+    const langs = Array.from(new Set(typingTexts.map(text => text.language)));
+    return langs;
+  }, [typingTexts]);
+
+  const languageLabels: Record<string, string> = {
+    vi: 'Tiếng Việt',
+    en: 'English',
+    jp: '日本語',
+    fr: 'Français',
+    es: 'Español',
+    zh: '中文',
+    de: 'Deutsch',
+    ru: 'Русский',
+    it: 'Italiano',
+    ko: '한국어'
+  };
 
   const filteredTexts = useMemo(() => {
     let filtered = typingTexts;
-
-    // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(text => 
         text.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         text.text.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
-    // Filter by category
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(text => text.category === selectedCategory);
     }
-
-    // Filter by difficulty
     if (selectedDifficulty !== 'all') {
       filtered = filtered.filter(text => text.difficulty === selectedDifficulty);
     }
-
-    // Filter by language
     if (selectedLanguage !== 'all') {
       filtered = filtered.filter(text => text.language === selectedLanguage);
     }
-
     return filtered;
-  }, [searchTerm, selectedCategory, selectedDifficulty, selectedLanguage]);
+  }, [typingTexts, searchTerm, selectedCategory, selectedDifficulty, selectedLanguage]);
 
   const handleTextSelect = (text: TypingText) => {
     onSelectText(text);
@@ -62,6 +100,10 @@ export default function TextSelector({ onSelectText, selectedText }: TextSelecto
     setSelectedLanguage('all');
   };
 
+  if (loading) {
+    return <div className="p-8 text-center text-lg">Đang tải dữ liệu...</div>;
+  }
+
   return (
     <div className="max-w-6xl mx-auto p-6">
       {/* Header */}
@@ -69,7 +111,6 @@ export default function TextSelector({ onSelectText, selectedText }: TextSelecto
         <h1 className="text-3xl font-bold text-gray-800 mb-2">Luyện gõ phím</h1>
         <p className="text-gray-600">Chọn bài luyện tập phù hợp với trình độ của bạn</p>
       </div>
-
       {/* Search and Filters */}
       <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
         <div className="flex flex-col md:flex-row gap-4 mb-4">
@@ -84,7 +125,6 @@ export default function TextSelector({ onSelectText, selectedText }: TextSelecto
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-blue-700 font-semibold"
             />
           </div>
-
           {/* Clear Filters */}
           <button
             onClick={clearFilters}
@@ -93,7 +133,6 @@ export default function TextSelector({ onSelectText, selectedText }: TextSelecto
             Xóa bộ lọc
           </button>
         </div>
-
         {/* Filter Options */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Category Filter */}
@@ -113,7 +152,6 @@ export default function TextSelector({ onSelectText, selectedText }: TextSelecto
               ))}
             </select>
           </div>
-
           {/* Difficulty Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -131,7 +169,6 @@ export default function TextSelector({ onSelectText, selectedText }: TextSelecto
               <option value="hard">Khó</option>
             </select>
           </div>
-
           {/* Language Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -144,20 +181,19 @@ export default function TextSelector({ onSelectText, selectedText }: TextSelecto
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-blue-700 font-semibold"
             >
               <option value="all">Tất cả ngôn ngữ</option>
-              <option value="vi">Tiếng Việt</option>
-              <option value="en">English</option>
+              {languageOptions.map(lang => (
+                <option key={lang} value={lang}>{languageLabels[lang] || lang}</option>
+              ))}
             </select>
           </div>
         </div>
       </div>
-
       {/* Results Count */}
       <div className="mb-4">
         <p className="text-gray-600">
           Tìm thấy <span className="font-semibold">{filteredTexts.length}</span> bài luyện tập
         </p>
       </div>
-
       {/* Text List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredTexts.map((text, index) => (
@@ -181,15 +217,13 @@ export default function TextSelector({ onSelectText, selectedText }: TextSelecto
                   {text.category}
                 </span>
                 <span className="px-2 py-1 bg-purple-100 text-purple-600 rounded-full text-xs font-medium">
-                  {text.language === 'vi' ? 'Tiếng Việt' : 'English'}
+                  {languageLabels[text.language] || text.language}
                 </span>
               </div>
             </div>
-            
             <p className="text-gray-600 text-sm line-clamp-3 mb-4">
               {text.text.substring(0, 100)}...
             </p>
-            
             <div className="flex items-center justify-between text-xs text-gray-500">
               <span>{text.text.length} ký tự</span>
               <span>{text.text.split(' ').length} từ</span>
@@ -197,17 +231,6 @@ export default function TextSelector({ onSelectText, selectedText }: TextSelecto
           </motion.div>
         ))}
       </div>
-
-      {/* No Results */}
-      {filteredTexts.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-gray-400 mb-4">
-            <Search className="w-16 h-16 mx-auto" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-600 mb-2">Không tìm thấy bài luyện tập</h3>
-          <p className="text-gray-500">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
-        </div>
-      )}
     </div>
   );
 } 
