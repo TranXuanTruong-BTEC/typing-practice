@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { TypingText } from '@/data/typing-texts';
+import React from 'react';
 
 export default function AdminPage() {
   const [form, setForm] = useState({ title: '', text: '', category: '', language: '', difficulty: 'easy' });
@@ -20,9 +21,9 @@ export default function AdminPage() {
     return cats;
   }, [typingTexts]);
 
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
