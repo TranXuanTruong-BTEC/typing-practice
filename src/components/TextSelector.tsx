@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { TypingText, typingTexts, getTextsByCategory, getTextsByDifficulty, getTextsByLanguage } from '@/data/typing-texts';
+import { TypingText, typingTexts } from '@/data/typing-texts';
 import { getDifficultyColor } from '@/lib/typing-utils';
 import { motion } from 'framer-motion';
-import { Search, Filter, BookOpen, Globe, Zap } from 'lucide-react';
+import { Search, BookOpen, Globe, Zap } from 'lucide-react';
 
 interface TextSelectorProps {
   onSelectText: (text: TypingText) => void;

@@ -9,10 +9,21 @@ interface AdBannerProps {
   category?: string;
 }
 
+interface AdContent {
+  title: string;
+  description: string;
+  price: string;
+  originalPrice: string;
+  discount: string;
+  image: string;
+  link: string;
+  type: 'product' | 'course' | 'software';
+}
+
 export default function AdBanner({ type, category }: AdBannerProps) {
   // Mock ad content - in real implementation, this would be replaced with actual ad network code
-  const getAdContent = () => {
-    const ads = [
+  const getAdContent = (): AdContent => {
+    const ads: AdContent[] = [
       {
         title: 'Bàn phím cơ chất lượng cao',
         description: 'Tăng tốc độ gõ phím với bàn phím cơ chuyên nghiệp',
@@ -59,7 +70,7 @@ export default function AdBanner({ type, category }: AdBannerProps) {
   };
 
   // Sửa lỗi hydration: chỉ render ad khi đã ở client
-  const [ad, setAd] = React.useState<any>(null);
+  const [ad, setAd] = React.useState<AdContent | null>(null);
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {

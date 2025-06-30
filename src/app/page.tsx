@@ -8,8 +8,7 @@ import TextSelector from '@/components/TextSelector';
 import Leaderboard from '@/components/Leaderboard';
 import AdBanner from '@/components/AdBanner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Keyboard, Trophy, Home, Settings, Info } from 'lucide-react';
-import Link from 'next/link';
+import { Keyboard, Trophy, Home } from 'lucide-react';
 
 export default function HomePage() {
   const [currentView, setCurrentView] = useState<'selector' | 'typing' | 'leaderboard'>('selector');
@@ -66,7 +65,7 @@ export default function HomePage() {
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setCurrentView(item.id as any)}
+                    onClick={() => setCurrentView(item.id as 'selector' | 'typing' | 'leaderboard')}
                     disabled={item.disabled}
                     className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       currentView === item.id

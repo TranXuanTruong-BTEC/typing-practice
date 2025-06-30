@@ -39,7 +39,7 @@ export const compareTexts = (original: string, typed: string): {
   const typedWords = typed.trim().split(/\s+/);
   
   let correctCharacters = 0;
-  let totalCharacters = original.length;
+  const totalCharacters = original.length;
   let errors = 0;
   let correctWords = 0;
   

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TypingText } from '@/data/typing-texts';
 import { TypingStats, calculateStats, formatTime, getWPMColor, getAccuracyColor, getDifficultyColor } from '@/lib/typing-utils';
 import { motion } from 'framer-motion';
@@ -39,11 +39,18 @@ export default function TypingArea({ selectedText, onComplete }: TypingAreaProps
     };
   }, [isStarted, isPaused, isCompleted, startTime]);
 
+  const handleComplete = useCallback(() => {
+    setIsCompleted(true);
+    const finalStats = calculateStats(selectedText.text, typedText, currentTime);
+    setStats(finalStats);
+    onComplete(finalStats);
+  }, [selectedText.text, typedText, currentTime, onComplete]);
+
   useEffect(() => {
     if (typedText.length === selectedText.text.length) {
       handleComplete();
     }
-  }, [typedText, selectedText.text]);
+  }, [typedText, selectedText.text, handleComplete]);
 
   const handleStart = () => {
     if (!isStarted) {
@@ -68,13 +75,6 @@ export default function TypingArea({ selectedText, onComplete }: TypingAreaProps
     setCurrentTime(0);
     setStats(null);
     inputRef.current?.focus();
-  };
-
-  const handleComplete = () => {
-    setIsCompleted(true);
-    const finalStats = calculateStats(selectedText.text, typedText, currentTime);
-    setStats(finalStats);
-    onComplete(finalStats);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
