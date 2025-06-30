@@ -15,8 +15,13 @@ interface TypingText {
   language: string;
 }
 
+interface PracticeMode {
+  mode: 'full' | 'time' | 'length';
+  value?: number;
+}
+
 interface TextSelectorProps {
-  onSelectText: (text: TypingText) => void;
+  onSelectText: (text: TypingText, practiceMode?: PracticeMode) => void;
   selectedText: TypingText | null;
   resetTrigger?: number;
 }
@@ -69,13 +74,25 @@ export default function TextSelector({ onSelectText, selectedText, resetTrigger 
     ko: '한국어'
   };
 
+  // Thêm hàm loại bỏ dấu tiếng Việt
+  function removeVietnameseTones(str: string) {
+    return str.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+  }
+
   const filteredTexts = useMemo(() => {
     let filtered = typingTexts;
     if (searchTerm) {
-      filtered = filtered.filter(text => 
-        text.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        text.text.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      const normalizedSearch = removeVietnameseTones(searchTerm.toLowerCase().trim());
+      filtered = filtered.filter(text => {
+        const fields = [
+          text.title,
+          text.text,
+          text.category,
+          text.language,
+          text.difficulty
+        ].map(val => removeVietnameseTones(String(val).toLowerCase()));
+        return fields.some(val => val.includes(normalizedSearch));
+      });
     }
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(text => text.category === selectedCategory);
@@ -145,6 +162,7 @@ export default function TextSelector({ onSelectText, selectedText, resetTrigger 
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-blue-700 font-semibold"
+              data-cy="category-select"
             >
               <option value="all">Tất cả danh mục</option>
               {categories.map(category => (
@@ -162,6 +180,7 @@ export default function TextSelector({ onSelectText, selectedText, resetTrigger 
               value={selectedDifficulty}
               onChange={(e) => setSelectedDifficulty(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-blue-700 font-semibold"
+              data-cy="difficulty-select"
             >
               <option value="all">Tất cả độ khó</option>
               <option value="easy">Dễ</option>
@@ -179,6 +198,7 @@ export default function TextSelector({ onSelectText, selectedText, resetTrigger 
               value={selectedLanguage}
               onChange={(e) => setSelectedLanguage(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-blue-700 font-semibold"
+              data-cy="language-select"
             >
               <option value="all">Tất cả ngôn ngữ</option>
               {languageOptions.map(lang => (
@@ -196,40 +216,47 @@ export default function TextSelector({ onSelectText, selectedText, resetTrigger 
       </div>
       {/* Text List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredTexts.map((text, index) => (
-          <motion.div
-            key={text.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            onClick={() => handleTextSelect(text)}
-            className={`bg-white p-6 rounded-lg shadow-sm border cursor-pointer transition-all hover:shadow-md hover:scale-105 ${
-              selectedText?.id === text.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''
-            }`}
-          >
-            <div className="mb-3">
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">{text.title}</h3>
-              <div className="flex items-center gap-2 mb-3">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(text.difficulty)}`}>
-                  {text.difficulty === 'easy' ? 'Dễ' : text.difficulty === 'medium' ? 'Trung bình' : 'Khó'}
-                </span>
-                <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-medium">
-                  {text.category}
-                </span>
-                <span className="px-2 py-1 bg-purple-100 text-purple-600 rounded-full text-xs font-medium">
-                  {languageLabels[text.language] || text.language}
-                </span>
+        {filteredTexts.map((text, index) => {
+          const key = (text as any)._id || text.id || index;
+          return (
+            <motion.div
+              key={key}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              onClick={() => handleTextSelect(text)}
+              className={`bg-white p-6 rounded-lg shadow-sm border cursor-pointer transition-all hover:shadow-md hover:scale-105 ${
+                selectedText?.id === text.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+              }`}
+            >
+              <div className="mb-3">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">{text.title}</h3>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(text.difficulty)}`}
+                    key={`difficulty-${key}`}
+                  >
+                    {text.difficulty === 'easy' ? 'Dễ' : text.difficulty === 'medium' ? 'Trung bình' : 'Khó'}
+                  </span>
+                  <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-medium"
+                    key={`category-${key}`}
+                  >
+                    {text.category}
+                  </span>
+                  <span className="px-2 py-1 bg-purple-100 text-purple-600 rounded-full text-xs font-medium"
+                    key={`lang-${key}`}
+                  >
+                    {languageLabels[text.language] || text.language}
+                  </span>
+                </div>
               </div>
-            </div>
-            <p className="text-gray-600 text-sm line-clamp-3 mb-4">
-              {text.text.substring(0, 100)}...
-            </p>
-            <div className="flex items-center justify-between text-xs text-gray-500">
-              <span>{text.text.length} ký tự</span>
-              <span>{text.text.split(' ').length} từ</span>
-            </div>
-          </motion.div>
-        ))}
+              <p className="text-gray-600 text-sm line-clamp-3 mb-4">
+                {text.text.substring(0, 100)}...
+              </p>
+              <span key={`len-${key}`}>{text.text.length} ký tự</span>
+              <span key={`words-${key}`}>{text.text.split(' ').length} từ</span>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );

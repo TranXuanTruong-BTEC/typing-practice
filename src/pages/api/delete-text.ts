@@ -8,8 +8,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const client = await clientPromise;
     const db = client.db();
     const { id } = req.body;
-    await db.collection('typingTexts').deleteOne({ _id: new ObjectId(id) });
-    res.status(200).json({ success: true });
+    let deleteResult = null;
+    try {
+      // Thử xóa theo ObjectId (MongoDB _id)
+      deleteResult = await db.collection('typingTexts').deleteOne({ _id: new ObjectId(id) });
+    } catch (e) {
+      // Nếu id không phải ObjectId, thử xóa theo trường id (string)
+      deleteResult = await db.collection('typingTexts').deleteOne({ id });
+    }
+    if (deleteResult && deleteResult.deletedCount > 0) {
+      res.status(200).json({ success: true });
+    } else {
+      res.status(404).json({ success: false, error: 'Không tìm thấy bài tập để xóa.' });
+    }
   } catch (err) {
     res.status(500).json({ success: false, error: err });
   }

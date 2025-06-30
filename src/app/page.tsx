@@ -9,20 +9,41 @@ import Leaderboard from '@/components/Leaderboard';
 import AdBanner from '@/components/AdBanner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Keyboard, Trophy, Home } from 'lucide-react';
+import PracticeModeSelector from '@/components/PracticeModeSelector';
 
 export default function HomePage() {
-  const [currentView, setCurrentView] = useState<'selector' | 'typing' | 'leaderboard'>('selector');
+  const [currentView, setCurrentView] = useState<'selector' | 'practiceModeStep' | 'typing' | 'leaderboard'>('selector');
   const [selectedText, setSelectedText] = useState<TypingText | null>(null);
   const [currentStats, setCurrentStats] = useState<TypingStats | null>(null);
   const [resetSelector, setResetSelector] = useState(0);
+  const [practiceMode, setPracticeMode] = useState<any>({ mode: 'full' });
 
-  const handleTextSelect = (text: TypingText) => {
+  const handleTextSelect = (text: TypingText, mode?: any) => {
     setSelectedText(text);
+    setPracticeMode(mode || { mode: 'full' });
     setCurrentView('typing');
   };
 
   const handleTypingComplete = (stats: TypingStats) => {
     setCurrentStats(stats);
+    // Lưu lịch sử vào MongoDB
+    if (selectedText) {
+      fetch('/api/add-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          textId: selectedText.id,
+          title: selectedText.title,
+          category: selectedText.category,
+          language: selectedText.language,
+          difficulty: selectedText.difficulty,
+          wpm: stats.wpm,
+          accuracy: stats.accuracy,
+          timeElapsed: stats.timeElapsed,
+          date: new Date().toISOString()
+        })
+      });
+    }
   };
 
   const handleBackToSelector = () => {
@@ -133,6 +154,7 @@ export default function HomePage() {
                   <TypingArea
                     selectedText={selectedText}
                     onComplete={handleTypingComplete}
+                    practiceMode={practiceMode}
                   />
                 </div>
                 

@@ -6,12 +6,18 @@ import { TypingStats, calculateStats, formatTime, getWPMColor, getAccuracyColor,
 import { motion } from 'framer-motion';
 import { Play, Pause, RotateCcw, Trophy, Target, Clock } from 'lucide-react';
 
+interface PracticeMode {
+  mode: 'full' | 'time' | 'length';
+  value?: number;
+}
+
 interface TypingAreaProps {
   selectedText: TypingText;
   onComplete: (stats: TypingStats) => void;
+  practiceMode?: PracticeMode;
 }
 
-export default function TypingArea({ selectedText, onComplete }: TypingAreaProps) {
+export default function TypingArea({ selectedText, onComplete, practiceMode = { mode: 'full' } }: TypingAreaProps) {
   const [typedText, setTypedText] = useState('');
   const [isStarted, setIsStarted] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -19,6 +25,9 @@ export default function TypingArea({ selectedText, onComplete }: TypingAreaProps
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [stats, setStats] = useState<TypingStats | null>(null);
+  const [forceCorrect, setForceCorrect] = useState(false);
+  const [shake, setShake] = useState(false);
+  const [endReason, setEndReason] = useState<null | 'timeout' | 'completed'>(null);
   
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -43,14 +52,36 @@ export default function TypingArea({ selectedText, onComplete }: TypingAreaProps
     setIsCompleted(true);
     const finalStats = calculateStats(selectedText.text, typedText, currentTime);
     setStats(finalStats);
+    if (typedText.length >= selectedText.text.length) {
+      setEndReason('completed');
+    } else {
+      setEndReason('timeout');
+    }
     onComplete(finalStats);
   }, [selectedText.text, typedText, currentTime, onComplete]);
 
   useEffect(() => {
-    if (typedText.length === selectedText.text.length) {
-      handleComplete();
+    if (practiceMode.mode === 'time' && isStarted && !isPaused && !isCompleted && practiceMode.value) {
+      if (currentTime >= practiceMode.value * 1000) {
+        if (!isCompleted) {
+          setEndReason('timeout');
+          setIsCompleted(true);
+          const finalStats = calculateStats(selectedText.text, typedText, currentTime);
+          setStats(finalStats);
+          onComplete(finalStats);
+        }
+      }
     }
-  }, [typedText, selectedText.text, handleComplete]);
+  }, [practiceMode, isStarted, isPaused, isCompleted, currentTime, handleComplete, selectedText.text, typedText, onComplete]);
+
+  useEffect(() => {
+    if (practiceMode.mode === 'length' && isStarted && !isCompleted && practiceMode.value) {
+      if (typedText.length >= practiceMode.value) {
+        setEndReason('completed');
+        handleComplete();
+      }
+    }
+  }, [practiceMode, isStarted, isCompleted, typedText.length, handleComplete]);
 
   const handleStart = () => {
     if (!isStarted) {
@@ -78,10 +109,26 @@ export default function TypingArea({ selectedText, onComplete }: TypingAreaProps
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (!isStarted && e.target.value.length > 0) {
+    const value = e.target.value;
+    if (!isStarted && value.length > 0) {
       handleStart();
     }
-    setTypedText(e.target.value);
+    if (forceCorrect) {
+      const original = selectedText.text;
+      let allow = true;
+      for (let i = 0; i < value.length; i++) {
+        if (value[i] !== original[i]) {
+          allow = false;
+          break;
+        }
+      }
+      if (!allow) {
+        setShake(true);
+        setTimeout(() => setShake(false), 300);
+        return;
+      }
+    }
+    setTypedText(value);
   };
 
   const renderText = () => {
@@ -90,19 +137,19 @@ export default function TypingArea({ selectedText, onComplete }: TypingAreaProps
 
     return originalChars.map((char, index) => {
       let className = 'text-gray-700 px-1';
-      
+      let style: React.CSSProperties = {};
       if (index < typedChars.length) {
         if (typedChars[index] === char) {
           className = 'bg-green-600 text-white rounded px-1';
         } else {
-          className = 'bg-red-600 text-white rounded px-1';
+          className = 'bg-red-600 text-white rounded px-1 underline underline-offset-2';
+          style = { textDecorationColor: '#ef4444', textDecorationThickness: 3 };
         }
       } else if (index === typedChars.length) {
         className = 'border-b-2 border-blue-800 text-blue-800 bg-white px-1 font-bold';
       }
-
       return (
-        <span key={index} className={className}>
+        <span key={index} className={className} style={style}>
           {char}
         </span>
       );
@@ -127,6 +174,20 @@ export default function TypingArea({ selectedText, onComplete }: TypingAreaProps
             {selectedText.language === 'vi' ? 'Tiếng Việt' : 'English'}
           </span>
         </div>
+        <div className="mt-2 text-blue-700 text-sm font-medium">
+          {practiceMode.mode === 'full' && 'Chế độ: Toàn bộ nội dung'}
+          {practiceMode.mode === 'time' && `Chế độ: Theo thời gian (${practiceMode.value || 60} giây)`}
+          {practiceMode.mode === 'length' && `Chế độ: Theo độ dài (${practiceMode.value || 100} ký tự)`}
+        </div>
+      </div>
+
+      {/* Chế độ bắt sửa lỗi */}
+      <div className="mb-4 flex items-center gap-3">
+        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <input type="checkbox" checked={forceCorrect} onChange={e => setForceCorrect(e.target.checked)} />
+          Bắt buộc sửa lỗi mới được gõ tiếp
+        </label>
+        {forceCorrect && <span className="text-xs text-red-600">(Không cho phép gõ tiếp nếu sai)</span>}
       </div>
 
       {/* Stats Display */}
@@ -221,7 +282,7 @@ export default function TypingArea({ selectedText, onComplete }: TypingAreaProps
           onPaste={(e) => e.preventDefault()}
           disabled={isCompleted}
           placeholder="Bắt đầu gõ để luyện tập..."
-          className="w-full h-32 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-mono text-lg text-blue-700"
+          className={`w-full h-32 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-mono text-lg text-blue-700 ${shake ? 'animate-shake' : ''}`}
           spellCheck={true}
         />
       </div>
@@ -234,6 +295,12 @@ export default function TypingArea({ selectedText, onComplete }: TypingAreaProps
           className="mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-lg"
         >
           <h3 className="text-xl font-bold mb-4">Kết quả luyện tập</h3>
+          {endReason === 'timeout' && typedText.length < selectedText.text.length && (
+            <div className="mb-4 text-lg font-semibold text-yellow-200">⏰ Hết thời gian! Bạn chưa hoàn thành bài luyện tập.</div>
+          )}
+          {endReason === 'completed' && (
+            <div className="mb-4 text-lg font-semibold text-green-200">🎉 Chúc mừng! Bạn đã hoàn thành trước thời gian. Kỷ lục mới!</div>
+          )}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <div className="text-sm opacity-90">WPM</div>
@@ -254,6 +321,20 @@ export default function TypingArea({ selectedText, onComplete }: TypingAreaProps
           </div>
         </motion.div>
       )}
+
+      <style jsx>{`
+        @keyframes shake {
+          0% { transform: translateX(0); }
+          20% { transform: translateX(-8px); }
+          40% { transform: translateX(8px); }
+          60% { transform: translateX(-8px); }
+          80% { transform: translateX(8px); }
+          100% { transform: translateX(0); }
+        }
+        .animate-shake {
+          animation: shake 0.3s;
+        }
+      `}</style>
     </div>
   );
 } 
