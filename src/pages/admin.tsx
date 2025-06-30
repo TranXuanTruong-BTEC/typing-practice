@@ -92,15 +92,15 @@ export default function AdminPage() {
     <div className="admin-container">
       <h2 className="admin-title">{editingId ? 'Sửa bài tập' : 'Thêm bài tập mới'}</h2>
       <form onSubmit={handleSubmit} className="admin-form">
-        <input name="title" placeholder="Tiêu đề" value={form.title} onChange={handleChange} required className="admin-input" />
-        <textarea name="text" placeholder="Nội dung" value={form.text} onChange={handleChange} required rows={4} className="admin-input" />
-        <select name="category" value={form.category} onChange={handleChange} required className="admin-input">
+        <input name="title" placeholder="Tiêu đề" value={form.title} onChange={handleChange} required className="admin-input" data-cy="admin-title" />
+        <textarea name="text" placeholder="Nội dung" value={form.text} onChange={handleChange} required rows={4} className="admin-input" data-cy="admin-text" />
+        <select name="category" value={form.category} onChange={handleChange} required className="admin-input" data-cy="admin-category">
           <option value="">Chọn danh mục</option>
           {categories.map(cat => (
             <option key={cat} value={cat}>{cat}</option>
           ))}
         </select>
-        <select name="language" value={form.language} onChange={handleChange} required className="admin-input">
+        <select name="language" value={form.language} onChange={handleChange} required className="admin-input" data-cy="admin-language">
           <option value="">Chọn ngôn ngữ</option>
           <option value="vi">Tiếng Việt</option>
           <option value="en">English</option>
@@ -113,13 +113,13 @@ export default function AdminPage() {
           <option value="it">Italiano</option>
           <option value="ko">한국어</option>
         </select>
-        <select name="difficulty" onChange={handleChange} value={form.difficulty} required className="admin-input">
+        <select name="difficulty" onChange={handleChange} value={form.difficulty} required className="admin-input" data-cy="admin-difficulty">
           <option value="easy">Dễ</option>
           <option value="medium">Trung bình</option>
           <option value="hard">Khó</option>
         </select>
         <div className="admin-btn-group">
-          <button type="submit" disabled={loading} className="admin-btn admin-btn-primary">{loading ? (editingId ? 'Đang sửa...' : 'Đang thêm...') : (editingId ? 'Lưu thay đổi' : 'Thêm bài tập')}</button>
+          <button type="submit" disabled={loading} className="admin-btn admin-btn-primary" data-cy="admin-submit">{loading ? (editingId ? 'Đang sửa...' : 'Đang thêm...') : (editingId ? 'Lưu thay đổi' : 'Thêm bài tập')}</button>
           {editingId && <button type="button" onClick={() => { setEditingId(null); setForm({ title: '', text: '', category: '', language: '', difficulty: 'easy' }); setMessage(''); }} className="admin-btn admin-btn-secondary">Hủy sửa</button>}
         </div>
       </form>
@@ -139,14 +139,14 @@ export default function AdminPage() {
           </thead>
           <tbody>
             {typingTexts.map(text => (
-              <tr key={text._id}>
+              <tr key={text._id || text.id}>
                 <td>{text.title}</td>
                 <td>{text.category}</td>
                 <td>{text.language}</td>
                 <td>{text.difficulty}</td>
                 <td>
                   <button onClick={() => handleEdit(text)} className="admin-btn admin-btn-edit">Sửa</button>
-                  <button onClick={() => handleDelete(text._id)} className="admin-btn admin-btn-delete">Xóa</button>
+                  <button onClick={() => text._id ? handleDelete(String(text._id)) : alert('Không tìm thấy _id để xóa!')} className="admin-btn admin-btn-delete" disabled={!text._id}>Xóa</button>
                 </td>
               </tr>
             ))}
