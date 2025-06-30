@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       // Thử xóa theo ObjectId (MongoDB _id)
       deleteResult = await db.collection('typingTexts').deleteOne({ _id: new ObjectId(id) });
-    } catch (_) {
+    } catch {
       // Nếu id không phải ObjectId, thử xóa theo trường id (string)
       deleteResult = await db.collection('typingTexts').deleteOne({ id });
     }

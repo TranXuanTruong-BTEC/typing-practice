@@ -59,7 +59,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleEdit = (text: any) => {
+  const handleEdit = (text: { _id?: string; id?: string; title: string; text: string; category: string; language: string; difficulty: string }) => {
     setEditingId(text._id);
     setForm({
       title: text.title,

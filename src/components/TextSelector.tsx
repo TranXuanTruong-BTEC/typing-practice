@@ -208,7 +208,7 @@ export default function TextSelector({ onSelectText, selectedText, resetTrigger 
       {/* Text List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredTexts.map((text, index) => {
-          const key = (text as any)._id || text.id || index;
+          const key = (text as { _id?: string; id?: string })._id || text.id || index;
           return (
             <motion.div
               key={key}
