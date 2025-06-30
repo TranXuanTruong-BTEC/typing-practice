@@ -9,16 +9,16 @@ import Leaderboard from '@/components/Leaderboard';
 import AdBanner from '@/components/AdBanner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Keyboard, Trophy, Home } from 'lucide-react';
-import PracticeModeSelector from '@/components/PracticeModeSelector';
+import type { PracticeMode } from '@/components/TextSelector';
 
 export default function HomePage() {
   const [currentView, setCurrentView] = useState<'selector' | 'practiceModeStep' | 'typing' | 'leaderboard'>('selector');
   const [selectedText, setSelectedText] = useState<TypingText | null>(null);
   const [currentStats, setCurrentStats] = useState<TypingStats | null>(null);
   const [resetSelector, setResetSelector] = useState(0);
-  const [practiceMode, setPracticeMode] = useState<any>({ mode: 'full' });
+  const [practiceMode, setPracticeMode] = useState<PracticeMode>({ mode: 'full' });
 
-  const handleTextSelect = (text: TypingText, mode?: any) => {
+  const handleTextSelect = (text: TypingText, mode?: PracticeMode) => {
     setSelectedText(text);
     setPracticeMode(mode || { mode: 'full' });
     setCurrentView('typing');
@@ -152,7 +152,7 @@ export default function HomePage() {
                 {/* Main Content */}
                 <div className="flex-1">
                   <TypingArea
-                    selectedText={selectedText}
+                    selectedText={selectedText as TypingText}
                     onComplete={handleTypingComplete}
                     practiceMode={practiceMode}
                   />

@@ -1,21 +1,12 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-// import { TypingText, typingTexts } from '@/data/typing-texts';
+import { TypingText } from '@/data/typing-texts';
 import { getDifficultyColor } from '@/lib/typing-utils';
 import { motion } from 'framer-motion';
 import { Search, BookOpen, Globe, Zap } from 'lucide-react';
 
-interface TypingText {
-  id: string;
-  title: string;
-  category: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-  text: string;
-  language: string;
-}
-
-interface PracticeMode {
+export interface PracticeMode {
   mode: 'full' | 'time' | 'length';
   value?: number;
 }

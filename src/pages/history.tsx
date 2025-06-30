@@ -13,8 +13,18 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
+interface HistoryRecord {
+  date: string;
+  title: string;
+  wpm: number;
+  accuracy: number;
+  timeElapsed: number;
+  language: string;
+  difficulty: string;
+}
+
 export default function HistoryPage() {
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<HistoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

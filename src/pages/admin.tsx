@@ -5,7 +5,7 @@ export default function AdminPage() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string|null>(null);
-  const [typingTexts, setTypingTexts] = useState<any[]>([]);
+  const [typingTexts, setTypingTexts] = useState<TypingText[]>([]);
   const [refresh, setRefresh] = useState(0);
 
   useEffect(() => {
