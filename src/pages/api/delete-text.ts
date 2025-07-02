@@ -15,7 +15,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(200).end();
     return;
   }
-  if (req.method !== 'DELETE') return res.status(405).end();
+  // Cho phép cả POST và DELETE
+  if (req.method !== 'DELETE' && req.method !== 'POST') return res.status(405).end();
   try {
     const client = await clientPromise;
     const db = client.db();
